@@ -417,6 +417,7 @@ source "drivers/misc/ts27010mux/Kconfig"
 source "drivers/misc/modem_pm_driver/Kconfig
 source "drivers/misc/smc/Kconfig"
 source "drivers/misc/sec/Kconfig"
+source "drivers/misc/symsearch/Kconfig"
 source "drivers/misc/netmux/Kconfig"
 source "drivers/misc/netmux_linkdriver/Kconfig"
 

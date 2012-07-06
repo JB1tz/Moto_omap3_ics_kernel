@@ -46,6 +46,7 @@ obj-$(CONFIG_WL127X_TEST)	+= wl127x_test.o
 obj-$(CONFIG_MODEM_PM_DRIVER)   += modem_pm_driver/
 obj-$(CONFIG_SMC_DRIVER)        += smc/
 obj-$(CONFIG_SEC_DRIVER)        += sec/
+obj-$(CONFIG_SYMSEARCH)		+= symsearch/
 obj-$(CONFIG_NETMUX_DRIVER)     += netmux/
 obj-$(CONFIG_NETMUX_LINKDRIVER) += netmux_linkdriver/
 obj-$(CONFIG_SYSPANIC)		+= syspanic.o
