@@ -49,5 +49,6 @@ ccflags-y += -Isgx -Iomap3 \
 	-DSUPPORT_SGX \
 	-DSGX530 -DSUPPORT_SGX530
 
-obj-m += pvr-off.o
+pvroff-objs := pvr-off.o hook.o
+obj-m += pvroff.o
 
