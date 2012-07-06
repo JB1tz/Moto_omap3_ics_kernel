@@ -37,15 +37,10 @@
 #include "symsearch.h"
 #include "hook.h"
 
-#ifndef DEFYPLUS
-# define PVR_DEV_MAJOR 252
-#else
-# define PVR_DEV_MAJOR 246
-#endif
 #define TAG "PVR-off"
-
 static bool hooked = false;
 static bool job_is_done = false;
+IMG_INT pvrmajor = 247;
 
 struct driver_private {
 	struct kobject kobj;
@@ -163,7 +158,6 @@ static int unload_pvr_stack(void)
 {
 	struct device_driver *drv;
 	struct kobject *kobj;
-	IMG_INT AssignedMajorNumber = PVR_DEV_MAJOR;
 
 	SYMSEARCH_BIND_FUNCTION(pvroff, OMAPLFBDeinit);
 	SYMSEARCH_BIND_FUNCTION(pvroff, PVRSRVDriverRemove);
@@ -196,9 +190,9 @@ static int unload_pvr_stack(void)
 		return -1;
 	}
 
-	device_destroy(psPvrClass, MKDEV(AssignedMajorNumber, 0));
+	device_destroy(psPvrClass, MKDEV(pvrmajor, 0));
 	class_destroy(psPvrClass);
-	unregister_chrdev((IMG_UINT)AssignedMajorNumber, "pvrsrvkm");
+	unregister_chrdev((IMG_UINT)pvrmajor, "pvrsrvkm");
 
 	drv = driver_find("pvrsrvkm", &platform_bus_type);
 	if (!drv) {

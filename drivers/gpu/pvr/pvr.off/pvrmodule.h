@@ -26,6 +26,14 @@
 
 #ifndef	_PVRMODULE_H_
 #define	_PVRMODULE_H_
+#include <linux/moduleparam.h>
+#include "img_types.h"
+
+extern IMG_INT pvrmajor;
+module_param(pvrmajor, IMG_INT, 0644);
+
 MODULE_AUTHOR("Imagination Technologies Ltd. <gpl-support@imgtec.com>");
+MODULE_PARM_DESC(pvrmajor, "Device major of the pvr module");
 MODULE_LICENSE("GPL");
+
 #endif	
