@@ -152,3 +152,4 @@ obj-$(CONFIG_SGX530) := pvr_common.o sgx.o omaplfb.o pvr530.o
 obj-$(CONFIG_VIRTUAL_DISPLAY_SUPPORT) := pvr_common.o sgx.o \
 	sgx_displayclass.o pvr540.o
 obj-$(CONFIG_SGX_PDUMP) += dbgdrv.o
+obj-y                   += pvr.off/
