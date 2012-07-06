@@ -4,11 +4,20 @@
 
 #define ENTRIES_PER_LINE 4
 
+#if CRC_LE_BITS <= 8
 #define LE_TABLE_SIZE (1 << CRC_LE_BITS)
-#define BE_TABLE_SIZE (1 << CRC_BE_BITS)
+#else
+#define LE_TABLE_SIZE 256
+#endif
 
-static uint32_t crc32table_le[LE_TABLE_SIZE];
-static uint32_t crc32table_be[BE_TABLE_SIZE];
+#if CRC_BE_BITS <= 8
+#define BE_TABLE_SIZE (1 << CRC_BE_BITS)
+#else
+#define BE_TABLE_SIZE 256
+#endif
+
+static uint32_t crc32table_le[8][256];
+static uint32_t crc32table_be[8][256];
 
 /**
  * crc32init_le() - allocate and initialize LE table data
@@ -22,12 +31,19 @@ static void crc32init_le(void)
 	unsigned i, j;
 	uint32_t crc = 1;
 
-	crc32table_le[0] = 0;
+	crc32table_le[0][0] = 0;
 
-	for (i = 1 << (CRC_LE_BITS - 1); i; i >>= 1) {
+	for (i = LE_TABLE_SIZE >> 1; i; i >>= 1) {
 		crc = (crc >> 1) ^ ((crc & 1) ? CRCPOLY_LE : 0);
 		for (j = 0; j < LE_TABLE_SIZE; j += 2 * i)
-			crc32table_le[i + j] = crc ^ crc32table_le[j];
+			crc32table_le[0][i + j] = crc ^ crc32table_le[0][j];
+	}
+	for (i = 0; i < LE_TABLE_SIZE; i++) {
+		crc = crc32table_le[0][i];
+		for (j = 1; j < 8; j++) {
+			crc = crc32table_le[0][crc & 0xff] ^ (crc >> 8);
+			crc32table_le[j][i] = crc;
+		}
 	}
 }
 
@@ -39,43 +55,67 @@ static void crc32init_be(void)
 	unsigned i, j;
 	uint32_t crc = 0x80000000;
 
-	crc32table_be[0] = 0;
+	crc32table_be[0][0] = 0;
 
 	for (i = 1; i < BE_TABLE_SIZE; i <<= 1) {
 		crc = (crc << 1) ^ ((crc & 0x80000000) ? CRCPOLY_BE : 0);
 		for (j = 0; j < i; j++)
-			crc32table_be[i + j] = crc ^ crc32table_be[j];
+			crc32table_be[0][i + j] = crc ^ crc32table_be[0][j];
+	}
+	for (i = 0; i < BE_TABLE_SIZE; i++) {
+		crc = crc32table_be[0][i];
+		for (j = 1; j < 8; j++) {
+			crc = crc32table_be[0][(crc >> 24) & 0xff] ^ (crc << 8);
+			crc32table_be[j][i] = crc;
+		}
 	}
 }
 
-static void output_table(uint32_t table[], int len, char *trans)
+static void output_table(uint32_t table[8][256], int len, char trans)
 {
-	int i;
+	int i, j;
 
-	for (i = 0; i < len - 1; i++) {
-		if (i % ENTRIES_PER_LINE == 0)
-			printf("\n");
-		printf("%s(0x%8.8xL), ", trans, table[i]);
+	for (j = 0 ; j < 8; j++) {
+		printf("static const u32 t%d_%ce[] = {", j, trans);
+		for (i = 0; i < len - 1; i++) {
+			if ((i % ENTRIES_PER_LINE) == 0)
+				printf("\n");
+			printf("to%ce(0x%8.8xL),", trans, table[j][i]);
+			if ((i % ENTRIES_PER_LINE) != (ENTRIES_PER_LINE - 1))
+				printf(" ");
+		}
+		printf("to%ce(0x%8.8xL)};\n\n", trans, table[j][len - 1]);
+
+		if (trans == 'l') {
+			if ((j+1)*8 >= CRC_LE_BITS)
+				break;
+		} else {
+			if ((j+1)*8 >= CRC_BE_BITS)
+				break;
+		}
 	}
-	printf("%s(0x%8.8xL)\n", trans, table[len - 1]);
 }
 
 int main(int argc, char** argv)
 {
-	printf("/* this file is generated - do not edit */\n\n");
+	printf("/*\n");
+	printf(" * crc32table.h - CRC32 tables\n");
+	printf(" *    this file is generated - do not edit\n");
+	printf(" *	# gen_crc32table > crc32table.h\n");
+	printf(" *    with\n");
+	printf(" *	CRC_LE_BITS = %d\n", CRC_LE_BITS);
+	printf(" *	CRC_BE_BITS = %d\n", CRC_BE_BITS);
+	printf(" */\n");
+	printf("\n");
 
 	if (CRC_LE_BITS > 1) {
 		crc32init_le();
-		printf("static const u32 crc32table_le[] = {");
-		output_table(crc32table_le, LE_TABLE_SIZE, "tole");
-		printf("};\n");
+		output_table(crc32table_le, LE_TABLE_SIZE, 'l');
 	}
 
 	if (CRC_BE_BITS > 1) {
 		crc32init_be();
-		printf("static const u32 crc32table_be[] = {");
-		output_table(crc32table_be, BE_TABLE_SIZE, "tobe");
-		printf("};\n");
+		output_table(crc32table_be, BE_TABLE_SIZE, 'b');
 	}
 
 	return 0;
