@@ -258,11 +258,11 @@ static int output_records(int outfd)
 
 		p->addr = htonl(p->addr);
 		p->len = htons(p->len);
-		write(outfd, &p->addr, writelen);
+		(void)write(outfd, &p->addr, writelen);
 		p = p->next;
 	}
 	/* EOF record is zero length, since we don't bother to represent
 	   the type field in the binary version */
-	write(outfd, zeroes, 6);
+	(void)write(outfd, zeroes, 6);
 	return 0;
 }
