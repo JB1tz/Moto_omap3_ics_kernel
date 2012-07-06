@@ -55,12 +55,12 @@ typedef enum _OMAP_ERROR_
 
 #define	LDM_DEV	struct platform_device
 
-SYMSEARCH_DECLARE_FUNCTION_STATIC(OMAP_ERROR, OMAPLFBDeinit);
+SYMSEARCH_DECLARE_FUNCTION_STATIC(OMAP_ERROR, OMAPLFBDeinit, IMG_VOID);
 SYMSEARCH_DECLARE_FUNCTION_STATIC(IMG_INT, PVRSRVDriverRemove, LDM_DEV *);
-SYMSEARCH_DECLARE_FUNCTION_STATIC(IMG_VOID, PVRMMapCleanup);
-SYMSEARCH_DECLARE_FUNCTION_STATIC(IMG_VOID, LinuxMMCleanup);
-SYMSEARCH_DECLARE_FUNCTION_STATIC(IMG_VOID, LinuxBridgeDeInit);
-SYMSEARCH_DECLARE_FUNCTION_STATIC(IMG_VOID, RemoveProcEntries);
+SYMSEARCH_DECLARE_FUNCTION_STATIC(IMG_VOID, PVRMMapCleanup, IMG_VOID);
+SYMSEARCH_DECLARE_FUNCTION_STATIC(IMG_VOID, LinuxMMCleanup, IMG_VOID);
+SYMSEARCH_DECLARE_FUNCTION_STATIC(IMG_VOID, LinuxBridgeDeInit, IMG_VOID);
+SYMSEARCH_DECLARE_FUNCTION_STATIC(IMG_VOID, RemoveProcEntries, IMG_VOID);
 SYMSEARCH_DECLARE_ADDRESS_STATIC(rfkill_fops);
 
 static int __exit OMAPLFBDriverRemove_Entry(struct platform_device *pdev)
@@ -146,7 +146,10 @@ static int __init pvroff_init(void)
 	struct device_driver *drv;
 	struct kobject *kobj;
 	IMG_INT AssignedMajorNumber = 247;
-    
+	/* TODO: detection of Major Number
+	 * based upon board. Possibly kernel version?
+	 */
+
 	printk(KERN_INFO "PVR-off: init\n");
 	SYMSEARCH_BIND_FUNCTION(pvr-off, OMAPLFBDeinit);
 	SYMSEARCH_BIND_FUNCTION(pvr-off, PVRSRVDriverRemove);
