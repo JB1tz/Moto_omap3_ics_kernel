@@ -35,15 +35,14 @@
 
 #include "syscommon.h"
 #include "symsearch.h"
+#include "hook.h"
 
 #ifndef DEFYPLUS
 # define PVR_DEV_MAJOR 252
 #else
 # define PVR_DEV_MAJOR 246
 #endif
-
 #define TAG "PVR-off"
-#include "hook.h"
 
 static bool hooked = false;
 static bool job_is_done = false;
@@ -72,7 +71,6 @@ typedef enum _OMAP_ERROR_
 #define	LDM_DEV	struct platform_device
 
 SYMSEARCH_DECLARE_FUNCTION_STATIC(OMAP_ERROR, OMAPLFBDeinit, IMG_VOID);
-
 SYMSEARCH_DECLARE_FUNCTION_STATIC(IMG_INT, PVRSRVDriverRemove, LDM_DEV *);
 SYMSEARCH_DECLARE_FUNCTION_STATIC(IMG_VOID, PVRMMapCleanup, IMG_VOID);
 SYMSEARCH_DECLARE_FUNCTION_STATIC(IMG_VOID, LinuxMMCleanup, IMG_VOID);
@@ -84,10 +82,9 @@ SYMSEARCH_DECLARE_ADDRESS_STATIC(rfkill_fops);
 
 static int __exit OMAPLFBDriverRemove_Entry(struct platform_device *pdev)
 {
-	if(OMAPLFBDeinit() != OMAP_OK)
-	{
+	if (OMAPLFBDeinit() != OMAP_OK)
 		pr_warning(TAG ": OMAPLFBDriverRemove: OMAPLFBDeinit failed\n");
-	}
+
 	return 0;
 }
 
@@ -121,10 +118,9 @@ static int find_pvr_class_struct(void)
 	int i;
 
 	/* find address of 'pvr' string */
-	for(i = 0; i < 0x00100000; i+=1)
-	{
-		// looking for ' pvr '
-		if(func[i] == 0x00 && func[i+1] == 0x70 && func[i+2] == 0x76
+	for (i = 0; i < 0x00100000; i+=1) {
+		/* looking for 'pvr' */
+		if (func[i] == 0x00 && func[i+1] == 0x70 && func[i+2] == 0x76
 			&& func[i+3] == 0x72 && func[i+4] == 0x00)
 		{
 			pvrClassNameAdr = (uint)func + i + 1;
@@ -137,8 +133,7 @@ static int find_pvr_class_struct(void)
 		}
 	}
 
-	if (!pvrClassNameAdr)
-	{
+	if (!pvrClassNameAdr) {
 		pr_warning(TAG ": pvr class name string not found!\n");
 		return -1;
 	}
@@ -146,9 +141,8 @@ static int find_pvr_class_struct(void)
 	/* the class structure begins with pointer to the name string */
 	func = (void *)SGX_BASE_ADDR; /* 0xcec00000 on omap3410 */
 
-	for(i = 0; i < 0x30000000; i+=1)
-	{
-		if(func[i+3] == match3 && func[i+2] == match2
+	for (i = 0; i < 0x30000000; i+=1) {
+		if (func[i+3] == match3 && func[i+2] == match2
 			&& func[i+1] == match1 && func[i] == match0)
 		{
 			psPvrClass = (void *)((uint)func + i);
@@ -157,11 +151,11 @@ static int find_pvr_class_struct(void)
 			break;
 		}
 	}
-	if (!psPvrClass)
-	{
+	if (!psPvrClass) {
 		pr_warning(TAG ": pvr class structure not found!\n");
 		return -1;
 	}
+
 	return 0;
 }
 
@@ -178,12 +172,11 @@ static int unload_pvr_stack(void)
 	SYMSEARCH_BIND_FUNCTION(pvroff, LinuxBridgeDeInit);
 	SYMSEARCH_BIND_FUNCTION(pvroff, PVROSFuncDeInit);
 	SYMSEARCH_BIND_FUNCTION(pvroff, RemoveProcEntries);
-
 	SYMSEARCH_BIND_ADDRESS(pvroff, rfkill_fops);
 
 	lock_kernel();
 
-	// OMAPLFB
+	/* OMAPLFB */
 	drv = driver_find("omaplfb", &platform_bus_type);
 	if (!drv) {
 		pr_warning(TAG ": omaplfb driver not found, bailing out!\n");
@@ -196,9 +189,8 @@ static int unload_pvr_stack(void)
 		kobject_del(kobj);
 	}
 
-	// PVR
-	if (find_pvr_class_struct())
-	{
+	/* PVR */
+	if (find_pvr_class_struct()) {
 		pr_warning(TAG ": class structure search failed, bailing out!\n");
 		unlock_kernel();
 		return -1;
@@ -228,7 +220,6 @@ static int unload_pvr_stack(void)
 	LinuxBridgeDeInit();
 	PVROSFuncDeInit();
 	RemoveProcEntries();
-
 	unlock_kernel();
 
 	pr_info(TAG ": successfully done\n");
@@ -242,7 +233,6 @@ int lock_fb_info(struct fb_info *info)
 	struct omapfb_info *ofbi = FB2OFB(info);
 
 	ret = HOOK_INVOKE(lock_fb_info, info);
-
 	pr_info(TAG ": %s() ret=%d\n", __func__, ret);
 
 	if (job_is_done) 
@@ -260,9 +250,8 @@ int lock_fb_info(struct fb_info *info)
 	}
 
 	ret = unload_pvr_stack();
-	if (ret == 0) {
+	if (ret == 0)
 		job_is_done = true;
-	}
 
 	return ret;
 }
@@ -275,7 +264,6 @@ struct hook_info g_hi[] = {
 static int __init pvroff_init(void)
 {
 	pr_info(TAG ": init\n");
-
 	hooked = (hook_init() == 0);
 
 	return 0;

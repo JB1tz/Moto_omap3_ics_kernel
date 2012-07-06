@@ -45,18 +45,20 @@ SYMSEARCH_DECLARE_FUNCTION_STATIC(unsigned long,
 SYMSEARCH_DECLARE_FUNCTION_STATIC(const char *,
 	pkallsyms_lookup, unsigned long, unsigned long *, unsigned long *, char **, char *);
 
-/* Only ARM is supported and the target will crash if there involves
-   PC related addressing in the first instruction. Because that
-   instruction will be moved to hook_info for execution.
-*/
-int hook(struct hook_info *hi) {
+/*
+ * Only ARM is supported and the target will crash if there involves
+ * PC related addressing in the first instruction. Because that
+ * instruction will be moved to hook_info for execution.
+ */
+int hook(struct hook_info *hi)
+{
 	char targetName[KSYM_NAME_LEN];
 	char *ptargetName;
-	if ( !hi->target ) {
-		if ( hi->targetName ) {
+	if (!hi->target) {
+		if (hi->targetName)
 			hi->target = (unsigned int*)pkallsyms_lookup_name(hi->targetName);
-		}
-		if ( !hi->target ) {
+
+		if (!hi->target) {
 			ERR("Target address is not defined and targetName(%s) cannot be found.\n",
 			     hi->targetName ? hi->targetName : "");
 			return -1;
@@ -67,16 +69,16 @@ int hook(struct hook_info *hi) {
 		ptargetName = targetName;
 	}
 
-	// Save the first 2 instructions from target.
+	/* Save the first 2 instructions from target. */
 	P("target = %p(%s), newf = %x\n", hi->target, ptargetName, hi->newfunc);
 	P("*target = %x\n", hi->target[0]);
 	hi->asm0 = hi->target[0];
 
-	// Use 1 instruction static replacement.
+	/* Use 1 instruction static replacement. */
 	hi->target[0] = 0xea000000 + (0xffffff & (hi->newfunc - ((unsigned int)hi->target + 8)) / 4);
 	P("*target = %x\n", hi->target[0]);
 
-	// Setup jmp table to first non-overwritten offset.
+	/* Setup jmp table to first non-overwritten offset. */
 	hi->jmp = 0xe51ff004;
 	hi->target_cont = hi->target+1;
 	P("&invoke = %p, target_cont = %p\n", &hi->asm0, hi->target_cont);
@@ -85,32 +87,38 @@ int hook(struct hook_info *hi) {
 	return 0;
 }
 
-int unhook(struct hook_info *hi) {
-	if ( hi->target ) {
-		// Restore the first 2 instructions to target.
+int unhook(struct hook_info *hi)
+{
+	if (hi->target) {
+		/* Restore the first 2 instructions to target. */
 		hi->target[0] = hi->asm0;
 		INFO("unhooked %s\n", hi->targetName);
 	}
 	return 0;
 }
 
-int hook_init(void) {
+int hook_init(void)
+{
 	int i;
+
 	SYMSEARCH_BIND_FUNCTION_TO(pvroff, kallsyms_lookup_name, pkallsyms_lookup_name);
 	SYMSEARCH_BIND_FUNCTION_TO(pvroff, kallsyms_lookup, pkallsyms_lookup);
 	lock_kernel();
-	for (i = 0; g_hi[i].newfunc; ++i) {
+
+	for (i = 0; g_hi[i].newfunc; ++i)
 		hook(&g_hi[i]);
-	}
+
 	unlock_kernel();
 	return 0;
 }
 
-void hook_exit(void) {
+void hook_exit(void)
+{
 	int i;
+
 	lock_kernel();
-	for (i = 0; g_hi[i].newfunc; ++i) {
+	for (i = 0; g_hi[i].newfunc; ++i)
 		unhook(&g_hi[i]);
-	}
+
 	unlock_kernel();
 }
