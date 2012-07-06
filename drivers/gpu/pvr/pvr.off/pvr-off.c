@@ -78,7 +78,7 @@ SYMSEARCH_DECLARE_ADDRESS_STATIC(rfkill_fops);
 static int __exit OMAPLFBDriverRemove_Entry(struct platform_device *pdev)
 {
 	if (OMAPLFBDeinit() != OMAP_OK)
-		pr_warning(TAG ": OMAPLFBDriverRemove: OMAPLFBDeinit failed\n");
+		pr_err(TAG ": OMAPLFBDriverRemove: OMAPLFBDeinit failed\n");
 
 	return 0;
 }
@@ -129,7 +129,7 @@ static int find_pvr_class_struct(void)
 	}
 
 	if (!pvrClassNameAdr) {
-		pr_warning(TAG ": pvr class name string not found!\n");
+		pr_err(TAG ": pvr class name string not found!\n");
 		return -1;
 	}
 
@@ -147,7 +147,7 @@ static int find_pvr_class_struct(void)
 		}
 	}
 	if (!psPvrClass) {
-		pr_warning(TAG ": pvr class structure not found!\n");
+		pr_err(TAG ": pvr class structure not found!\n");
 		return -1;
 	}
 
@@ -173,7 +173,7 @@ static int unload_pvr_stack(void)
 	/* OMAPLFB */
 	drv = driver_find("omaplfb", &platform_bus_type);
 	if (!drv) {
-		pr_warning(TAG ": omaplfb driver not found, bailing out!\n");
+		pr_err(TAG ": omaplfb driver not found, bailing out!\n");
 		unlock_kernel();
 		return -1;
 	} else {
@@ -185,7 +185,7 @@ static int unload_pvr_stack(void)
 
 	/* PVR */
 	if (find_pvr_class_struct()) {
-		pr_warning(TAG ": class structure search failed, bailing out!\n");
+		pr_err(TAG ": class structure search failed, bailing out!\n");
 		unlock_kernel();
 		return -1;
 	}
@@ -196,7 +196,7 @@ static int unload_pvr_stack(void)
 
 	drv = driver_find("pvrsrvkm", &platform_bus_type);
 	if (!drv) {
-		pr_warning(TAG ": pvrsrvkm driver not found, bailing out!\n");
+		pr_err(TAG ": pvrsrvkm driver not found, bailing out!\n");
 		unlock_kernel();
 		return -1;
 	} else {
