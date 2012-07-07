@@ -30,8 +30,10 @@
 #include <linux/stat.h>
 #include "img_types.h"
 
-extern IMG_INT pvrmajor;
-module_param(pvrmajor, IMG_INT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+//extern IMG_INT pvrmajor;
+//module_param(pvrmajor, IMG_INT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+extern int pvrmajor;
+module_param(pvrmajor, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 MODULE_AUTHOR("Imagination Technologies Ltd. <gpl-support@imgtec.com>");
 MODULE_PARM_DESC(pvrmajor, "Device major of the pvr module");
