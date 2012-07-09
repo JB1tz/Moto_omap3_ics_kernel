@@ -36,12 +36,13 @@
 #include "syscommon.h"
 #include "symsearch.h"
 #include "hook.h"
+#include "pvrmodule.h"
 
 #define TAG "PVR-off"
 static bool hooked = false;
 static bool job_is_done = false;
-IMG_INT pvrmajor = 247;
-
+//IMG_INT pvrmajor = 247;
+int pvrmajor = 247;
 struct driver_private {
 	struct kobject kobj;
 	struct klist klist_devices;
@@ -190,7 +191,7 @@ static int unload_pvr_stack(void)
 		return -1;
 	}
 
-	device_destroy(psPvrClass, MKDEV(pvrmajor, 0));
+	device_destroy(psPvrClass, MKDEV((IMG_INT)pvrmajor, 0));
 	class_destroy(psPvrClass);
 	unregister_chrdev((IMG_UINT)pvrmajor, "pvrsrvkm");
 
