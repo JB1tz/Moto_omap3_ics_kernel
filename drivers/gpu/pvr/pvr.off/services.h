@@ -33,7 +33,6 @@ extern "C" {
 
 #include "img_defs.h"
 #include "servicesext.h"
-#include "pdumpdefs.h"
 
 
 #define PVRSRV_4K_PAGE_SIZE		4096UL
@@ -96,10 +95,6 @@ extern "C" {
 #define PVRSRV_MISC_INFO_MEMSTATS_PRESENT			(1UL<<2)
 #define PVRSRV_MISC_INFO_GLOBALEVENTOBJECT_PRESENT	(1UL<<3)
 #define PVRSRV_MISC_INFO_DDKVERSION_PRESENT			(1UL<<4)
-
-#define PVRSRV_PDUMP_MAX_FILENAME_SIZE			20
-#define PVRSRV_PDUMP_MAX_COMMENT_SIZE			200
-
 
 #define PVRSRV_CHANGEDEVMEM_ATTRIBS_CACHECOHERENT		0x00000001
 
@@ -734,19 +729,6 @@ PVRSRV_ERROR IMG_CALLCONV PVRSRVPDumpDriverInfo(IMG_CONST PVRSRV_CONNECTION *psC
 IMG_IMPORT
 PVRSRV_ERROR IMG_CALLCONV PVRSRVPDumpIsCapturing(IMG_CONST PVRSRV_CONNECTION *psConnection,
 								 				IMG_BOOL *pbIsCapturing);
-
-IMG_IMPORT
-PVRSRV_ERROR IMG_CALLCONV PVRSRVPDumpBitmap(IMG_CONST PVRSRV_CONNECTION *psConnection,
-								 			IMG_CHAR *pszFileName,
-											IMG_UINT32 ui32FileOffset,
-											IMG_UINT32 ui32Width,
-											IMG_UINT32 ui32Height,
-											IMG_UINT32 ui32StrideInBytes,
-											IMG_DEV_VIRTADDR sDevBaseAddr,
-											IMG_UINT32 ui32Size,
-											PDUMP_PIXEL_FORMAT ePixelFormat,
-											PDUMP_MEM_FORMAT eMemFormat,
-											IMG_UINT32 ui32PDumpFlags);
 
 IMG_IMPORT
 PVRSRV_ERROR IMG_CALLCONV PVRSRVPDumpRegRead(IMG_CONST PVRSRV_CONNECTION *psConnection,
