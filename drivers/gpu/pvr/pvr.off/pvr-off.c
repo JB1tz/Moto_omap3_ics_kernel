@@ -25,6 +25,7 @@
 #include <linux/fs.h>
 #include <linux/io.h>
 #include <linux/module.h>
+#include <linux/moduleparam.h>
 #include <linux/platform_device.h>
 #include <linux/smp_lock.h>
 #include <linux/omapfb.h>
@@ -35,14 +36,15 @@
 
 #include "syscommon.h"
 #include "symsearch.h"
-#include "hook.h"
-#include "pvrmodule.h"
 
 #define TAG "PVR-off"
+#include "hook.h"
+
 static bool hooked = false;
 static bool job_is_done = false;
-//IMG_INT pvrmajor = 247;
-int pvrmajor = 247;
+static short major_number = -1;
+static bool hook_enable = 0;
+
 struct driver_private {
 	struct kobject kobj;
 	struct klist klist_devices;
@@ -137,21 +139,21 @@ static int find_pvr_class_struct(void)
 	/* the class structure begins with pointer to the name string */
 	func = (void *)SGX_BASE_ADDR; /* 0xcec00000 on omap3410 */
 
-	for (i = 0; i < 0x30000000; i+=1) {
+	for(i = 0; i < 0x30000000; i+=1) {
 		if (func[i+3] == match3 && func[i+2] == match2
 			&& func[i+1] == match1 && func[i] == match0)
 		{
 			psPvrClass = (void *)((uint)func + i);
-			pr_info(TAG ": found pvr class struct at 0x%p\n", psPvrClass);
+			pr_info(TAG ": found possible pvr class struct at 0x%p\n", psPvrClass);
 			pr_info(TAG ": name of the found class is %s\n", psPvrClass->name);
-			break;
+			if (!strcmp("pvr", psPvrClass->name)) break;
+			pr_info(TAG ": the class pointer seems wrong, continue search");
 		}
 	}
 	if (!psPvrClass) {
 		pr_err(TAG ": pvr class structure not found!\n");
 		return -1;
 	}
-
 	return 0;
 }
 
@@ -159,7 +161,7 @@ static int unload_pvr_stack(void)
 {
 	struct device_driver *drv;
 	struct kobject *kobj;
-
+	IMG_INT AssignedMajorNumber = major_number;
 	SYMSEARCH_BIND_FUNCTION(pvroff, OMAPLFBDeinit);
 	SYMSEARCH_BIND_FUNCTION(pvroff, PVRSRVDriverRemove);
 	SYMSEARCH_BIND_FUNCTION(pvroff, PVRMMapCleanup);
@@ -167,6 +169,7 @@ static int unload_pvr_stack(void)
 	SYMSEARCH_BIND_FUNCTION(pvroff, LinuxBridgeDeInit);
 	SYMSEARCH_BIND_FUNCTION(pvroff, PVROSFuncDeInit);
 	SYMSEARCH_BIND_FUNCTION(pvroff, RemoveProcEntries);
+
 	SYMSEARCH_BIND_ADDRESS(pvroff, rfkill_fops);
 
 	lock_kernel();
@@ -191,13 +194,13 @@ static int unload_pvr_stack(void)
 		return -1;
 	}
 
-	device_destroy(psPvrClass, MKDEV((IMG_INT)pvrmajor, 0));
+	device_destroy(psPvrClass, MKDEV(AssignedMajorNumber, 0));
 	class_destroy(psPvrClass);
-	unregister_chrdev((IMG_UINT)pvrmajor, "pvrsrvkm");
+	unregister_chrdev((IMG_UINT)AssignedMajorNumber, "pvrsrvkm");
 
 	drv = driver_find("pvrsrvkm", &platform_bus_type);
 	if (!drv) {
-		pr_err(TAG ": pvrsrvkm driver not found, bailing out!\n");
+		pr_warning(TAG ": pvrsrvkm driver not found, bailing out!\n");
 		unlock_kernel();
 		return -1;
 	} else {
@@ -228,9 +231,10 @@ int lock_fb_info(struct fb_info *info)
 	struct omapfb_info *ofbi = FB2OFB(info);
 
 	ret = HOOK_INVOKE(lock_fb_info, info);
+
 	pr_info(TAG ": %s() ret=%d\n", __func__, ret);
 
-	if (job_is_done) 
+	if (job_is_done)
 		return ret;
 
 	for (i = 0; i < ofbi->num_overlays; i++) {
@@ -252,14 +256,19 @@ int lock_fb_info(struct fb_info *info)
 }
 
 struct hook_info g_hi[] = {
-        HOOK_INIT(lock_fb_info),
-        HOOK_INIT_END
+	HOOK_INIT(lock_fb_info),
+	HOOK_INIT_END
 };
 
 static int __init pvroff_init(void)
 {
-	pr_info(TAG ": init\n");
-	hooked = (hook_init() == 0);
+	pr_info(TAG ": init, pvrmajor %d, hook %d\n",major_number, hook_enable);
+
+	if (hook_enable) {
+		hooked = (hook_init() == 0);
+	} else {
+		unload_pvr_stack();
+	}
 
 	return 0;
 }
@@ -272,12 +281,17 @@ static void __exit pvroff_exit(void)
 	}
 }
 
+module_param(hook_enable, bool, 0);
+MODULE_PARM_DESC(hook_enable,  "hook_enable");
+module_param(major_number, short, 0);
+MODULE_PARM_DESC(major_number,  "major_number");
+
 module_init(pvroff_init);
 module_exit(pvroff_exit);
 
 MODULE_ALIAS("PVR-off");
 MODULE_DESCRIPTION("unload built-in pvr and omaplfb drivers");
-MODULE_VERSION("1.0");
+MODULE_VERSION("1.2");
 MODULE_AUTHOR("Nadlabak");
 MODULE_AUTHOR("CyanogenDefy");
 MODULE_LICENSE("GPL");
