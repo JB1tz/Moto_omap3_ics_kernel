@@ -43,7 +43,7 @@ ccflags-$(CONFIG_SGX_BUILD_DEBUG) += \
 	-DDEBUG_BRIDGE_KM \
 	-DDLL_METRIC=1
 
-ccflags-y += -Isgx -Iomap3 \
+ccflags-y += \
 	-DSGX_CORE_REV=125 \
 	-DSGX_BASE_ADDR=0xD0000000 \
 	-DSUPPORT_SGX \

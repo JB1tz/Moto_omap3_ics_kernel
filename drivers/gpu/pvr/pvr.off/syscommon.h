@@ -27,8 +27,6 @@
 #ifndef _SYSCOMMON_H
 #define _SYSCOMMON_H
 
-#include "omap3/sysconfig.h"
-#include "omap3/sysinfo.h"
 #include "servicesint.h"
  
 #if defined(NO_HARDWARE) && defined(__linux__) && defined(__KERNEL__)
