@@ -50,11 +50,20 @@ static int thumbee_notifier(struct notifier_block *self, unsigned long cmd, void
 
 	switch (cmd) {
 	case THREAD_NOTIFY_FLUSH:
+#if defined (CONFIG_ARM_THUMBEE_MODULE)
 		thread->cpu_context.extra[0] = 0;
+#else
+		thread->thumbee_state = 0;
+#endif
 		break;
 	case THREAD_NOTIFY_SWITCH:
+#if defined (CONFIG_ARM_THUMBEE_MODULE)
 		current_thread_info()->cpu_context.extra[0] = teehbr_read();
 		teehbr_write(thread->cpu_context.extra[0]);
+#else
+		current_thread_info()->thumbee_state = teehbr_read();
+		teehbr_write(thread->thumbee_state);
+#endif
 		break;
 	}
 
@@ -68,6 +77,10 @@ static struct notifier_block thumbee_notifier_block = {
 static int __init thumbee_init(void)
 {
 	unsigned long pfr0;
+	unsigned int cpu_arch = cpu_architecture();
+
+	if (cpu_arch < CPU_ARCH_ARMv7)
+		return 0;
 
 	/* processor feature register 0 */
 	asm("mrc	p15, 0, %0, c0, c1, 0\n" : "=r" (pfr0));
@@ -75,7 +88,9 @@ static int __init thumbee_init(void)
 		return 0;
 
 	printk(KERN_INFO "ThumbEE CPU extension supported.\n");
+#if defined (CONFIG_ARM_THUMBEE_MODULE)
 	printk(KERN_INFO "ThumbEE state is using extra[0] field in cpu context.\n");
+#endif
 	elf_hwcap |= HWCAP_THUMBEE;
 	thread_register_notifier(&thumbee_notifier_block);
 
