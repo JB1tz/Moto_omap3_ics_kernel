@@ -17,8 +17,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+/*
+ * This module enables ThumbEE.
+ * Motorola Milestone Adaptation by Skrilax_CZ
+ */
+
 #include <linux/kernel.h>
 #include <linux/init.h>
+#include <linux/module.h>
 
 #include <asm/thread_notify.h>
 
@@ -37,17 +43,18 @@ static inline void teehbr_write(unsigned long v)
 	asm("mcr	p14, 6, %0, c1, c0, 0\n" : : "r" (v));
 }
 
+/* use XScale's extra[0] field in context as it's unused on TI OMAP */
 static int thumbee_notifier(struct notifier_block *self, unsigned long cmd, void *t)
 {
 	struct thread_info *thread = t;
 
 	switch (cmd) {
 	case THREAD_NOTIFY_FLUSH:
-		thread->thumbee_state = 0;
+		thread->cpu_context.extra[0] = 0;
 		break;
 	case THREAD_NOTIFY_SWITCH:
-		current_thread_info()->thumbee_state = teehbr_read();
-		teehbr_write(thread->thumbee_state);
+		current_thread_info()->cpu_context.extra[0] = teehbr_read();
+		teehbr_write(thread->cpu_context.extra[0]);
 		break;
 	}
 
@@ -61,10 +68,6 @@ static struct notifier_block thumbee_notifier_block = {
 static int __init thumbee_init(void)
 {
 	unsigned long pfr0;
-	unsigned int cpu_arch = cpu_architecture();
-
-	if (cpu_arch < CPU_ARCH_ARMv7)
-		return 0;
 
 	/* processor feature register 0 */
 	asm("mrc	p15, 0, %0, c0, c1, 0\n" : "=r" (pfr0));
@@ -72,6 +75,7 @@ static int __init thumbee_init(void)
 		return 0;
 
 	printk(KERN_INFO "ThumbEE CPU extension supported.\n");
+	printk(KERN_INFO "ThumbEE state is using extra[0] field in cpu context.\n");
 	elf_hwcap |= HWCAP_THUMBEE;
 	thread_register_notifier(&thumbee_notifier_block);
 
@@ -79,3 +83,4 @@ static int __init thumbee_init(void)
 }
 
 late_initcall(thumbee_init);
+MODULE_LICENSE("GPL");
