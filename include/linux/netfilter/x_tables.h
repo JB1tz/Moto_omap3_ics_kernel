@@ -176,6 +176,43 @@ struct xt_counters_info
 #include <linux/netdevice.h>
 
 /**
+ * struct xt_action_param - parameters for matches/targets
+ *
+ * @match:      the match extension
+ * @target:     the target extension
+ * @matchinfo:  per-match data
+ * @targetinfo: per-target data
+ * @in:         input netdevice
+ * @out:        output netdevice
+ * @fragoff:    packet is a fragment, this is the data offset
+ * @thoff:      position of transport header relative to skb->data
+ * @hook:       hook number given packet came from
+ * @family:     Actual NFPROTO_* through which the function is invoked
+ *              (helpful when match->family == NFPROTO_UNSPEC)
+ *
+ * Fields written to by extensions:
+ *
+ * @hotdrop:    drop packet if we had inspection problems
+ * Network namespace obtainable using dev_net(in/out)
+ */
+struct xt_action_param {
+	union {
+		const struct xt_match *match;
+		const struct xt_target *target;
+	};
+	union {
+		const void *matchinfo, *targinfo;
+	};
+	const struct net_device *in, *out;
+	int fragoff;
+	unsigned int thoff;
+	unsigned int hooknum;
+	u_int8_t family;
+	bool hotdrop;
+};
+
+
+/**
  * struct xt_match_param - parameters for match extensions' match functions
  *
  * @in:		input netdevice
