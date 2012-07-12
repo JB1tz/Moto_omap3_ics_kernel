@@ -30,12 +30,6 @@
 #include "omap3/sysconfig.h"
 #include "omap3/sysinfo.h"
 #include "servicesint.h"
-#include "queue.h"
-#include "power.h"
-#include "resman.h"
-#include "ra.h"
-#include "device.h"
-#include "buffer_manager.h"
  
 #if defined(NO_HARDWARE) && defined(__linux__) && defined(__KERNEL__)
 #include <asm/io.h>
@@ -61,8 +55,7 @@ typedef struct _SYS_DATA_TAG_
 {
     IMG_UINT32                  ui32NumDevices;      	   	
 	SYS_DEVICE_ID				sDeviceID[SYS_DEVICE_COUNT];
-    PVRSRV_DEVICE_NODE			*psDeviceNodeList;			
-    PVRSRV_POWER_DEV			*psPowerDeviceList;			
+    //PVRSRV_DEVICE_NODE			*psDeviceNodeList;			
 	PVRSRV_RESOURCE				sPowerStateChangeResource;	
    	PVRSRV_SYS_POWER_STATE		eCurrentPowerState;			
    	PVRSRV_SYS_POWER_STATE		eFailedPowerState;			
@@ -81,12 +74,9 @@ typedef struct _SYS_DATA_TAG_
 															
 
 
-	PCOMMAND_COMPLETE_DATA		*ppsCmdCompleteData[SYS_DEVICE_COUNT];
-															
-
 	IMG_BOOL                    bReProcessQueues;    		
 
-	RA_ARENA					*apsLocalDevMemArena[SYS_MAX_LOCAL_DEVMEM_ARENAS]; 
+	//RA_ARENA					*apsLocalDevMemArena[SYS_MAX_LOCAL_DEVMEM_ARENAS]; 
 
     IMG_CHAR                    *pszVersionString;          
 	PVRSRV_EVENTOBJECT			*psGlobalEventObject;			
@@ -111,11 +101,11 @@ PVRSRV_ERROR SysDeinitialise(SYS_DATA *psSysData);
 PVRSRV_ERROR SysGetDeviceMemoryMap(PVRSRV_DEVICE_TYPE eDeviceType,
 									IMG_VOID **ppvDeviceMap);
 
-IMG_VOID SysRegisterExternalDevice(PVRSRV_DEVICE_NODE *psDeviceNode);
-IMG_VOID SysRemoveExternalDevice(PVRSRV_DEVICE_NODE *psDeviceNode);
+//IMG_VOID SysRegisterExternalDevice(PVRSRV_DEVICE_NODE *psDeviceNode);
+//IMG_VOID SysRemoveExternalDevice(PVRSRV_DEVICE_NODE *psDeviceNode);
 
-IMG_UINT32 SysGetInterruptSource(SYS_DATA			*psSysData,
-								 PVRSRV_DEVICE_NODE *psDeviceNode);
+//IMG_UINT32 SysGetInterruptSource(SYS_DATA			*psSysData,
+//								 PVRSRV_DEVICE_NODE *psDeviceNode);
 
 IMG_VOID SysClearInterrupts(SYS_DATA* psSysData, IMG_UINT32 ui32ClearBits);
 
@@ -177,29 +167,6 @@ static INLINE PVRSRV_ERROR SysAcquireData(SYS_DATA **ppsSysData)
 }
 
 
-#ifdef INLINE_IS_PRAGMA
-#pragma inline(SysInitialiseCommon)
-#endif
-static INLINE PVRSRV_ERROR SysInitialiseCommon(SYS_DATA *psSysData)
-{
-	PVRSRV_ERROR	eError;
-
-	
-	eError = PVRSRVInit(psSysData);
-
-	return eError;
-}
-
-#ifdef INLINE_IS_PRAGMA
-#pragma inline(SysDeinitialiseCommon)
-#endif
-static INLINE IMG_VOID SysDeinitialiseCommon(SYS_DATA *psSysData)
-{
-	
-	PVRSRVDeInit(psSysData);
-
-	OSDestroyResource(&psSysData->sPowerStateChangeResource);
-}
 #endif 
 
 

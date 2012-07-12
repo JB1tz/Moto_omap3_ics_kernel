@@ -30,8 +30,6 @@
 #include <linux/smp_lock.h>
 #include <linux/omapfb.h>
 
-#include <plat/display.h>
-#include <plat/vrfb.h>
 #include <../drivers/video/omap2/omapfb/omapfb.h>
 
 #include "syscommon.h"
@@ -111,7 +109,7 @@ static int find_pvr_class_struct(void)
 {
 	/* rfkill_fops - the last symbol in kallsyms before the strings */
 	unsigned char *func = (void *)SYMSEARCH_GET_ADDRESS(rfkill_fops);
-	uint pvrClassNameAdr;
+	uint pvrClassNameAdr = 0;
 	uint match0 = 0, match1 = 0, match2 = 0, match3 = 0;
 	int i;
 

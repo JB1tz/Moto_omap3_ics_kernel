@@ -36,11 +36,8 @@ extern "C" {
 
 
 #define PVRSRV_4K_PAGE_SIZE		4096UL
-
 #define PVRSRV_MAX_CMD_SIZE		1024
-
 #define PVRSRV_MAX_DEVICES		16	
-
 #define EVENTOBJNAME_MAXLENGTH (50)
 
 #define PVRSRV_MEM_READ						(1UL<<0)

@@ -32,10 +32,8 @@ extern "C" {
 #endif
 
 #include "services.h"
-#include "sysinfo.h"
 
 #define HWREC_DEFAULT_TIMEOUT	(500)
-
 #define DRIVERNAME_MAXLENGTH	(100)
 
 
