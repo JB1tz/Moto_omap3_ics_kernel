@@ -26,6 +26,7 @@
 #include <linux/init.h>
 #include <linux/module.h>
 
+#include <asm/system.h>
 #include <asm/thread_notify.h>
 
 /*
@@ -77,10 +78,12 @@ static struct notifier_block thumbee_notifier_block = {
 static int __init thumbee_init(void)
 {
 	unsigned long pfr0;
-	unsigned int cpu_arch = cpu_architecture();
 
+#if !defined (CONFIG_ARM_THUMBEE_MODULE)
+	unsigned int cpu_arch = cpu_architecture();
 	if (cpu_arch < CPU_ARCH_ARMv7)
 		return 0;
+#endif
 
 	/* processor feature register 0 */
 	asm("mrc	p15, 0, %0, c0, c1, 0\n" : "=r" (pfr0));
