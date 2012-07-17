@@ -63,7 +63,9 @@
  */
 struct dsscomp_dev {
 	struct miscdevice dev;
+#ifdef CONFIG_DEBUG_FS
 	struct dentry *dbgfs;
+#endif
 
 	/* cached DSS objects */
 	u32 num_ovls;

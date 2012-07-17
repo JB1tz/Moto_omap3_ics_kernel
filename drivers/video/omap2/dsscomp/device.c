@@ -532,6 +532,8 @@ static int dsscomp_probe(struct platform_device *pdev)
 		pr_err("dsscomp: failed to register misc device.\n");
 		return ret;
 	}
+
+#ifdef CONFIG_DEBUG_FS
 	cdev->dbgfs = debugfs_create_dir("dsscomp", NULL);
 	if (IS_ERR_OR_NULL(cdev->dbgfs))
 		dev_warn(DEV(cdev), "failed to create debug files.\n");
@@ -545,6 +547,7 @@ static int dsscomp_probe(struct platform_device *pdev)
 			cdev->dbgfs, dsscomp_dbg_events, &dsscomp_debug_fops);
 #endif
 	}
+#endif
 
 	platform_set_drvdata(pdev, cdev);
 
@@ -573,7 +576,9 @@ static int dsscomp_remove(struct platform_device *pdev)
 {
 	struct dsscomp_dev *cdev = platform_get_drvdata(pdev);
 	misc_deregister(&cdev->dev);
+#ifdef CONFIG_DEBUG_FS
 	debugfs_remove_recursive(cdev->dbgfs);
+#endif
 	dsscomp_queue_exit();
 	dsscomp_gralloc_exit();
 	kfree(cdev);
