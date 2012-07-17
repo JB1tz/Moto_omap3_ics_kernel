@@ -16,8 +16,10 @@
 #endif
 
 #ifdef CONFIG_OMAP2_VRFB
+#if defined(CONFIG_ION) || defined(CONFIG_ION_MODULE)
 #include <linux/ion.h>
 #include <linux/omap_ion.h>
+#endif
 #endif
 
 #ifdef CONFIG_OMAP3_ISP_RESIZER_ON_720P_VIDEO
@@ -442,12 +444,14 @@ skip_map1d:
 		}
 #endif
 
-#ifdef CONFIG_OMAP2_VRFB
+#if defined(CONFIG_OMAP2_VRFB)
+#if defined(CONFIG_ION) || defined(CONFIG_ION_MODULE)
 		if (cpu_is_omap3630() && (
 			oi->cfg.color_mode == OMAP_DSS_COLOR_YUV2 ||
 			oi->cfg.color_mode == OMAP_DSS_COLOR_UYVY)) {
 			omap_setup_vrfb_buffer(oi);
 		}
+#endif
 #endif
 
 		r = dsscomp_set_ovl(comp[ch], oi);
@@ -533,9 +537,9 @@ static void dsscomp_early_suspend(struct early_suspend *h)
 	err = wait_event_timeout(early_suspend_wq, blank_complete,
 				 msecs_to_jiffies(500));
 	if (err == 0)
-		pr_warn("DSSCOMP: timeout blanking screen\n");
+		printk(KERN_WARNING "DSSCOMP: timeout blanking screen\n");
 	else
-		pr_info("DSSCOMP: blanked screen\n");
+		printk(KERN_INFO "DSSCOMP: blanked screen\n");
 }
 
 static void dsscomp_late_resume(struct early_suspend *h)

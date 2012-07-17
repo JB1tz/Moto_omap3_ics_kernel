@@ -612,8 +612,9 @@ skip_ovl_set:
 
 	mutex_lock(&mtx);
 	if (mgrq[comp->ix].blanking) {
-		pr_info_ratelimited("ignoring apply mgr(%s) while blanking\n",
-				    mgr->name);
+                if (printk_ratelimit())
+		    printk(KERN_INFO "ignoring apply mgr(%s) while blanking\n",
+				     mgr->name);
 		r = -ENODEV;
 	} else {
 		r = mgr->apply(mgr);
@@ -635,8 +636,10 @@ skip_ovl_set:
 	 */
 	if (cb_programmed && r) {
 		/* clear error if callback already registered */
+#if 0
 		if (omap_dss_manager_unregister_callback(mgr, &cb))
 			r = 0;
+#endif
 	}
 	/* if failed to apply, kick out prior composition */
 	if (comp->must_apply && r)
