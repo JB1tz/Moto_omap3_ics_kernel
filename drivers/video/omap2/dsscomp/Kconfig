@@ -1,7 +1,7 @@
 menuconfig DSSCOMP
         tristate "OMAP DSS Composition support (EXPERIMENTAL)"
         depends on OMAP2_DSS && (PVR_SGX || SGX530)
-	default y
+	default n
 
         help
           Frame composition driver using OMAP DSS2.  Allows using all
