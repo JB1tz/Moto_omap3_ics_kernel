@@ -41,7 +41,6 @@
 static bool hooked = false;
 static bool job_is_done = false;
 static short major_number = -1;
-static bool hook_enable = 0;
 
 struct driver_private {
 	struct kobject kobj;
@@ -260,9 +259,9 @@ struct hook_info g_hi[] = {
 
 static int __init pvroff_init(void)
 {
-	pr_info(TAG ": init, pvrmajor %d, hook %d\n",major_number, hook_enable);
+	pr_info(TAG ": init, pvrmajor %d\n",major_number);
 
-	if (hook_enable) {
+	if (cpu_is_omap3630()) {
 		hooked = (hook_init() == 0);
 	} else {
 		unload_pvr_stack();
@@ -273,14 +272,12 @@ static int __init pvroff_init(void)
 
 static void __exit pvroff_exit(void)
 {
-	if (hooked) {
+	if (cpu_is_omap3630()) {
 		hook_exit();
 		hooked = false;
 	}
 }
 
-module_param(hook_enable, bool, 0);
-MODULE_PARM_DESC(hook_enable,  "hook_enable");
 module_param(major_number, short, 0);
 MODULE_PARM_DESC(major_number,  "major_number");
 
