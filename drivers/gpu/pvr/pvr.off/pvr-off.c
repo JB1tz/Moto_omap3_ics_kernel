@@ -34,6 +34,7 @@
 
 #include "syscommon.h"
 #include "symsearch.h"
+#include "dispsw.h"
 
 #define TAG "PVR-off"
 #include "hook.h"
@@ -65,6 +66,9 @@ typedef enum _OMAP_ERROR_
 
 #define	LDM_DEV	struct platform_device
 
+SYMSEARCH_DECLARE_FUNCTION_STATIC(void, dispsw_rotate_remove, struct dispsw_rotate_data *rot);
+SYMSEARCH_DECLARE_FUNCTION_STATIC(void, dispsw_mr_remove, struct dispsw_mr_data *mr);
+
 SYMSEARCH_DECLARE_FUNCTION_STATIC(OMAP_ERROR, OMAPLFBDeinit, IMG_VOID);
 SYMSEARCH_DECLARE_FUNCTION_STATIC(IMG_INT, PVRSRVDriverRemove, LDM_DEV *);
 SYMSEARCH_DECLARE_FUNCTION_STATIC(IMG_VOID, PVRMMapCleanup, IMG_VOID);
@@ -72,8 +76,27 @@ SYMSEARCH_DECLARE_FUNCTION_STATIC(IMG_VOID, LinuxMMCleanup, IMG_VOID);
 SYMSEARCH_DECLARE_FUNCTION_STATIC(IMG_VOID, LinuxBridgeDeInit, IMG_VOID);
 SYMSEARCH_DECLARE_FUNCTION_STATIC(IMG_VOID, PVROSFuncDeInit, IMG_VOID);
 SYMSEARCH_DECLARE_FUNCTION_STATIC(IMG_VOID, RemoveProcEntries, IMG_VOID);
-
 SYMSEARCH_DECLARE_ADDRESS_STATIC(rfkill_fops);
+
+static int __exit dispsw_remove(struct platform_device *pdev)
+{
+	struct dispsw_device *dsw = platform_get_drvdata(pdev);
+	if (dsw) {
+		dispsw_rotate_remove(&dsw->rot);
+		dispsw_mr_remove(&dsw->mr);
+		class_destroy(dsw->cls);
+		unregister_chrdev(dsw->major, "dispsw");
+		kfree(dsw);
+        }
+
+	return 0;
+}
+
+static int platform_drv_remove_dispsw(struct device *_dev)
+{
+	struct platform_device *dev = to_platform_device(_dev);
+	return dispsw_remove(dev);
+}
 
 static int __exit OMAPLFBDriverRemove_Entry(struct platform_device *pdev)
 {
@@ -171,6 +194,15 @@ static int unload_pvr_stack(void)
 
 	lock_kernel();
 
+	/* DISPSW */
+	drv = driver_find("dispsw", &platform_bus_type);
+	if (drv) {
+		kobj = &drv->p->kobj;
+		drv->remove = platform_drv_remove_dispsw;
+		driver_unregister(drv);
+		kobject_del(kobj);
+	}
+
 	/* OMAPLFB */
 	drv = driver_find("omaplfb", &platform_bus_type);
 	if (!drv) {
@@ -259,7 +291,7 @@ struct hook_info g_hi[] = {
 
 static int __init pvroff_init(void)
 {
-	pr_info(TAG ": init, pvrmajor %d\n",major_number);
+	pr_info(TAG ": init, pvrmajor %d\n", major_number);
 
 	if (cpu_is_omap3630()) {
 		hooked = (hook_init() == 0);
